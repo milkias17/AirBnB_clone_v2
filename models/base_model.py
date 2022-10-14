@@ -6,7 +6,12 @@ from datetime import datetime
 from sqlalchemy import Column, DateTime, String
 from sqlalchemy.orm import declarative_base
 
-Base = declarative_base()
+from models import HBNB_STORAGE
+
+if HBNB_STORAGE == "db":
+    Base = declarative_base()
+else:
+    Base = object
 
 
 class BaseModel:
@@ -19,23 +24,41 @@ class BaseModel:
     def __init__(self, *args, **kwargs):
         """Instatntiates a new model"""
         if not kwargs:
-            from models import storage
             self.id = str(uuid.uuid4())
             self.created_at = datetime.now()
             self.updated_at = datetime.now()
-            storage.new(self)
+            self.save()
         else:
-            kwargs['updated_at'] = datetime.strptime(kwargs['updated_at'],
-                                                     '%Y-%m-%dT%H:%M:%S.%f')
-            kwargs['created_at'] = datetime.strptime(kwargs['created_at'],
-                                                     '%Y-%m-%dT%H:%M:%S.%f')
-            del kwargs['__class__']
+            if "updated_at" in kwargs:
+                kwargs['updated_at'] = datetime.strptime(
+                    kwargs['updated_at'], '%Y-%m-%dT%H:%M:%S.%f')
+            else:
+                kwargs["updated_at"] = datetime.now()
+
+            if "created_at" in kwargs:
+                kwargs['created_at'] = datetime.strptime(
+                    kwargs['created_at'], '%Y-%m-%dT%H:%M:%S.%f')
+            else:
+                kwargs["created_at"] = datetime.now()
+
+            if "__class__" in kwargs:
+                del kwargs['__class__']
+
+            if "id" not in kwargs:
+                kwargs["id"] = str(uuid.uuid4())
+
             self.__dict__.update(kwargs)
+            self.save()
 
     def __str__(self):
         """Returns a string representation of the instance"""
-        cls = (str(type(self)).split('.')[-1]).split('\'')[0]
-        return '[{}] ({}) {}'.format(cls, self.id, self.__dict__)
+        dict_representation = self.to_dict()
+        cls = dict_representation["__class__"]
+
+        if "__class__" in dict_representation:
+            dict_representation.pop("__class__")
+
+        return '[{}] ({}) {}'.format(cls, self.id, dict_representation)
 
     def save(self):
         """Updates updated_at with current time when instance is changed"""

@@ -142,6 +142,7 @@ class HBNBCommand(cmd.Cmd):
             val = param.split("=")[1]
             if val.startswith('"'):
                 val = val.replace("_", " ")
+                val = val.strip('"')
                 params[key] = val
             elif val.isdigit():
                 params[key] = int(val)
@@ -152,9 +153,7 @@ class HBNBCommand(cmd.Cmd):
                 except ValueError:
                     continue
 
-        new_instance = HBNBCommand.classes[class_name]()
-        if params:
-            new_instance.__dict__.update(params)
+        new_instance = HBNBCommand.classes[class_name](**params)
         storage.save()
         print(new_instance.id)
         storage.save()
@@ -239,11 +238,11 @@ class HBNBCommand(cmd.Cmd):
             if args not in HBNBCommand.classes:
                 print("** class doesn't exist **")
                 return
-            for k, v in storage._FileStorage__objects.items():
-                if k.split(".")[0] == args:
-                    print_list.append(str(v))
+            storage_class = HBNBCommand.classes[args]
+            for _, v in storage.all(storage_class).items():
+                print_list.append(str(v))
         else:
-            for k, v in storage._FileStorage__objects.items():
+            for v in storage.all().values():
                 print_list.append(str(v))
 
         print(print_list)
