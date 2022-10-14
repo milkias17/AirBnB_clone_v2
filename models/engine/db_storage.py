@@ -18,6 +18,7 @@ from models.user import User
 
 class DBStorage:
     """This class manages storage of hbnb models in database"""
+
     __engine = None
     __session: Session = None
 
@@ -29,7 +30,8 @@ class DBStorage:
         DB = getenv("HBNB_MYSQL_DB")
 
         self.__engine = create_engine(
-            f"mysql+mysqldb://{USER}:{PWD}@{HOST}/{DB}", pool_pre_ping=True)
+            f"mysql+mysqldb://{USER}:{PWD}@{HOST}/{DB}", pool_pre_ping=True
+        )
 
         if getenv("HBNB_ENV") == "test":
             Base.metadata.drop_all(self.__engine)
@@ -39,7 +41,8 @@ class DBStorage:
         return_dict = {}
         if cls is None:
             results = self.__session.query(
-                User, State, City, Amenity, Place, Review).all()
+                User, State, City, Amenity, Place, Review
+            ).all()
             for obj in results:
                 key = f"{obj.__class__.__name__}.{obj.id}"
                 return_dict[key] = obj
@@ -68,6 +71,9 @@ class DBStorage:
     def reload(self):
         """Create all tables and the databases session"""
         Base.metadata.create_all(self.__engine)
-        session_factory = sessionmaker(
-            bind=self.__engine, expire_on_commit=False)
+        session_factory = sessionmaker(bind=self.__engine, expire_on_commit=False)
         self.__session = scoped_session(session_factory)
+
+    def close(self):
+        """Close database session"""
+        self.__session.close()
