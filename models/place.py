@@ -1,12 +1,20 @@
 #!/usr/bin/python3
 """ Place Module for HBNB project """
-from sqlalchemy import Column, Float, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Float, ForeignKey, Integer, String, Table
+from sqlalchemy.orm import relation, relationship
 
 # from models import HBNB_STORAGE, storage
 import models
 from models.base_model import Base, BaseModel
 from models.review import Review
+
+if models.HBNB_STORAGE == "db":
+    place_amenity = Table("place_amenity", Base.metadata,
+                          Column("place_id", String(60), ForeignKey(
+                              "places.id"), primary_key=True, nullable=False),
+                          Column("amenity_id", String(60), ForeignKey(
+                              "amenities.id"), primary_key=True,
+                              nullable=False))
 
 
 class Place(BaseModel, Base):
@@ -27,6 +35,9 @@ class Place(BaseModel, Base):
         cities = relationship("City", back_populates="places")
         reviews = relationship(
             "Review", back_populates="place", cascade="all, delete")
+        amenities = relationship(
+            "Amenity", secondary=place_amenity,
+            back_populates="place_amenities")
     else:
         city_id = ""
         user_id = ""
@@ -48,3 +59,20 @@ class Place(BaseModel, Base):
                     review_list.append(obj)
 
             return review_list
+
+        @property
+        def amenities(self):
+            from models.amenity import Amenity
+            amenity_list = []
+            for obj in models.storage.all(Amenity).values():
+                if obj.id in self.amenity_ids:
+                    amenity_list.append(obj)
+
+            return amenity_list
+
+        @amenities.setter
+        def amenities(self, obj):
+            from models.amenity import Amenity
+            if not isinstance(obj, Amenity):
+                return
+            self.amenity_ids.append(obj.id)
