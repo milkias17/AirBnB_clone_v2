@@ -39,6 +39,7 @@ class DBStorage:
     def all(self, cls=None):
         """Grabs all instances of cls in database"""
         return_dict = {}
+
         if cls is None:
             results = self.__session.query(
                 User, State, City, Amenity, Place, Review

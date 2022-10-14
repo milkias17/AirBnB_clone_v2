@@ -3,13 +3,15 @@
 from sqlalchemy import Column, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-from models import HBNB_STORAGE
+# from models import HBNB_STORAGE, storage
+import models
 from models.base_model import Base, BaseModel
+from models.review import Review
 
 
 class Place(BaseModel, Base):
     """ A place to stay """
-    if HBNB_STORAGE == "db":
+    if models.HBNB_STORAGE == "db":
         __tablename__ = "places"
         city_id = Column(String(60), ForeignKey("cities.id"), nullable=False)
         user_id = Column(String(60), ForeignKey("users.id"), nullable=False)
@@ -23,6 +25,8 @@ class Place(BaseModel, Base):
         longitude = Column(Float)
         user = relationship("User", back_populates="places")
         cities = relationship("City", back_populates="places")
+        reviews = relationship(
+            "Review", back_populates="place", cascade="all, delete")
     else:
         city_id = ""
         user_id = ""
@@ -35,3 +39,12 @@ class Place(BaseModel, Base):
         latitude = 0.0
         longitude = 0.0
         amenity_ids = []
+
+        @property
+        def reviews(self):
+            review_list = []
+            for obj in models.storage.all(Review).values():
+                if obj.place_id == self.id:
+                    review_list.append(obj)
+
+            return review_list
