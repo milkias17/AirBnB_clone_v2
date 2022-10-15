@@ -41,15 +41,14 @@ class DBStorage:
         return_dict = {}
 
         if cls is None:
-            results = self.__session.query(
-                User, State, City, Amenity, Place, Review
-            ).all()
+            for obj in [User, State, City, Amenity, Place, Review]:
+                for result in self.__session.query(obj).all():
+                    key = f"{result.__class__.__name__}.{result.id}"
+                    return_dict[key] = obj
         else:
-            results = self.__session.query(cls).all()
-
-        for obj in results:
-            key = f"{obj.__class__.__name__}.{obj.id}"
-            return_dict[key] = obj
+            for obj in self.__session.query(cls).all():
+                key = f"{obj.__class__.__name__}.{obj.id}"
+                return_dict[key] = obj
 
         return return_dict
 
